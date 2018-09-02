@@ -1,0 +1,4 @@
+参考连接：https://www.ibm.com/developerworks/cn/java/j-lo-spring-principle/index.html
+Spring框架的核心组件：
+	Core、Contex和Beans；即Spring是面向Bean的编程。
+Spring解决的问题：把对象之间的依赖关系用配置文件管理，即依赖注入机制。

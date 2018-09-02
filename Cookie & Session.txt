@@ -1,0 +1,18 @@
+参考连接：https://www.ibm.com/developerworks/cn/java/j-lo-servlet/
+Cookie: 如果一天的Pv有几亿的时候，占用带宽。
+Session： 致命弱点是不容易在多台服务器之间共享。
+3种方式让Session 工作：
+	--基于 URL Path Parameter，默认就支持
+	--基于 Cookie，如果你没有修改 Context 容器个 cookies 标识的话，默认也是支持的
+	--基于 SSL，默认不支持，只有 connector.getAttribute("SSLEnabled") 为 TRUE 时才支持
+浏览器不支持Cookie功能：
+		浏览器会将用户的SessionCookieName 重写到用户请求的URL参数中，格式如/path;name=value;name=value
+
+支持Cookie功能：Tomcat 会解析Cookie中的Session Id，并会覆盖URL中的Session ID。
+
+
+
+Servlet中的Listener：
+	基于观察者模式的Listener，大概有5种两类事件：  
+		它们分别是：4 个 EventListeners 类型的，ServletContextAttributeListener、ServletRequestAttributeListener、ServletRequestListener、HttpSessionAttributeListener 和
+			    2  个 LifecycleListeners 类型的，ServletContextListener、HttpSessionListener。

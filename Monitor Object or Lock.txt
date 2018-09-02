@@ -1,0 +1,13 @@
+Scoped Lock：
+	定义：区域锁是指线程执行进入一个区域时，一个锁将自动被获取，当线程执行离开这个区域时，这个锁将自动被释放。->synchronized关键字。
+Condition Variables;
+
+Java Monitor 同步：两个方面：互斥执行和协作。
+		互斥： synchronized
+		协作： wait/notify/notifyAll	
+(见图）
+线程如果获得监视锁成功，将成为该监视者对象的拥有者。在任一时刻内，监视者对象只属于一个活动线程 (Owner) 。
+		拥有者线程可以调用 wait 方法自动释放监视锁，进入等待状态。
+其中重点区别thread的Blocked vs Waiting：
+	Blocked：Thread state for a thread blocked waiting for a monitor lock.
+	Waiting：Thread state for a waiting thread.（该线程持有monitor lock）

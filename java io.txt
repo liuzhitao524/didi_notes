@@ -1,0 +1,103 @@
+		BIO、NIO和AIO关注解决方式
+
+需要理解的两对概念：
+	同步与异步：
+	阻塞与非阻塞：
+BIO:即阻塞I/O:不管是磁盘I/O还是网络I/O，数据在写入OutputStream 或者从InputStream读取时都有可能会阻塞。
+1.Java File:  File 并不代表一个真实存在的文件对象，当你通过指定一个路径描述符时，它就会返回一个代表这个路径相关联的一个虚拟对象，
+		这个可能是一个真实存在的文件或者是一个包含多个文件的目录.
+
+
+
+
+NIO:Channel、Selector和Buffer。
+   Buffer工作方式：
+		capacity: 缓冲区数组的总长度
+		position：下一个要操作数据元素的位置。
+		limit：	缓冲区数组中不可操作的下一个元素的位置，limit <= capacity;
+		mark: 用于记录当前position 的前一个位置或者默认是0；（当我们调用 mark() 时，它将记录当前 position 的前一个位置，当我们调用 reset 时，position 将恢复 mark 记录下来的值。）
+	 	flip() 方法有读转写。
+		缓冲区：通过 Channel 获取的 I/O 数据首先要经过操作系统的 Socket 缓冲区再将数据复制到 Buffer 中，
+		  这个的操作系统缓冲区就是底层的 TCP 协议关联的 RecvQ 或者 SendQ 队列，
+	         从操作系统缓冲区到用户缓冲区复制数据比较耗性能，
+	        Buffer 提供了另外一种直接操作操作系统缓冲区的的方式即 ByteBuffer.allocateDirector(size)，
+		这个方法返回的 byteBuffer 就是与底层存储空间关联的缓冲区，它的操作方式与 linux2.4 内核的 sendfile 操作方式类似。
+	缓存区分片：
+		-原缓冲区和子缓冲区共享一个底层数据数组。
+		-the two buffers' position,limit,and mark values will be independent.
+	只读缓冲区：
+		-通过缓冲区的asReadOnlyBuffer()方法，将任何常规缓冲区转化为只读缓冲区。
+	分散/聚集I/O（分散读取，聚集写入）： 是使用多个而不是单个缓冲区来保存数据的读写方法。
+		 使用多个缓冲区如同使用一个整体的缓冲区。
+
+	BIO vs NIO: NIO将需要写入或者读出的数据存放在Buffer对象；而面向流的I/O中，数据直接写入或者将数据读到Stream对象中。
+	通道 vs 流： 通道是双向的，而流是单向的（InputStream 或者OutputStream 的子类）
+Selector：
+	-(channel 与 selector 关联关系）A selectable channel's registration with a selector is  represented by a SelectionKey object.
+	-A  selector maintains three sets of selection keys:
+		--(keys()) The key set contains the keys representing the currrent channel registrations of  this selector;
+		--(selectedKeys()) The selected-key set is the set of keys such that each key's channel was detected to be ready for 
+			at least one of the operations identified in the key's interest set during a prior selection operation.
+	      	--The cancelled-key set is the set of keys that have been cancelled but whose channels have not yet been deregistered.
+
+AIO:核心概念：发起非阻塞方式的I/O操作。当I/O 完成时通知谁。
+   应用程序的责任： 什么时候发起操作？ I/O 操作完成时通知谁？
+两种使用方式： 
+	1.Future 方式；
+	2.Callback 方式。
+AsynchronousSocketChannel：connect，read，write
+AsynchronousFileChannel：lock，read，write
+AsynchronousServerSocketChannel：accept
+AsynchronousDatagramChannel：read，write，send，receive
+
+重点对比nio和aio：
+nio: 同步非阻塞
+aio：异步非阻塞
+分析链接：https://tech.meituan.com/nio.html
+传统经典io模型： 每连接每线程模型；主要原因： socket.accept(),socket.read(),socket.write()三个函数都是同步阻塞的。
+系统I/O的两个阶段：等待就绪和操作。eg： 读函数，分为等待系统可读和真正的读；写函数分为等待网卡可以写和真正的写。
+以socket.read() 函数为例：
+	--传统的BIO里面socket.read()，如果TCP RecvBuffer里没有数据，函数会一直阻塞，直到收到数据，返回读到的数据。
+
+	--对于NIO，如果TCP RecvBuffer有数据，就把数据从网卡读到内存，并且返回给用户；反之则直接返回0，永远不会阻塞。
+
+	--最新的AIO(Async I/O)里面会更进一步：不但等待就绪是非阻塞的，就连数据从网卡到内存的过程也是异步的。
+
+	总结： 换句话说，BIO里用户最关心“我要读”，NIO里用户最关心"我可以读了"，在AIO模型里用户更需要关注的是“读完了”。
+NIO特点： NIO一个重要的特点是：socket主要的读、写、注册和接收函数，在等待就绪阶段都是非阻塞的，真正的I/O操作是同步阻塞的（消耗CPU但性能非常高）	
+NIO高级主题（Proactor 与Reactor）：
+	I/O复用机制：需要事件分发器（event dispatcher)和事件处理器（event handler）或者回调函数。
+	两张事件分发器模式： Reactor和Proactor。
+		Reactor: Reactor模式是基于同步I/O的.在Reactor模式中，事件分发器等待某个事件或者可应用或个操作的状态发生（比如文件描述符可读写，或者是socket可读写），
+			 事件分发器就把这个事件传给事先注册的事件处理函数或者回调函数，由后者来做实际的读写操作。
+		Proactor:在Proactor模式中，事件处理者（或者代由事件分发器发起）直接发起一个异步读写操作（相当于请求），而实际的工作是由操作系统来完成的。发起时，需要提供的参数包括用于存放读到数据的缓存区、读的数据大小或用于存放外发数据的缓存区，以及这个请求完后的回调函数等信息。
+			 事件分发器得知了这个请求，它默默等待这个请求的完成，然后转发完成事件给相应的事件处理者或者回调。
+标准/典型的Reactor：
+	步骤1：等待事件到来（Reactor负责）。
+	步骤2：将读就绪事件分发给用户定义的处理器（Reactor负责）。
+	步骤3：读数据（用户处理器负责）。
+	步骤4：处理数据（用户处理器负责）。
+改进实现的模拟Proactor：
+	步骤1：等待事件到来（Proactor负责）。
+	步骤2：得到读就绪事件，执行读数据（现在由Proactor负责）。
+	步骤3：将读完成事件分发给用户处理器（Proactor负责）。
+	步骤4：处理数据（用户处理器负责）。
+
+额外话题：
+	InnerClass： 
+		-- Inner class has a link to enclosing object that made it,so it can access the members of that enclosing
+			object-without any special qualifications;
+		--.new create an object of one of its inner class;(You must use an object of the outer class to make an object of the inner class)
+		--.this produce the reference to the outer-class object,you name the outer class followed by a dot and this.
+		Anonymous inner class:
+			--If you'are defining an anonymous inner class and want to use an object that's defined outside the anonymous inner class,
+				the compiler requires that the argument reference be final;
+		Nested classes: make the inner class static.
+			How to understanding static :
+					non static inner class:
+						--The object of an oridinary inner class implicitly keeps a reference to the object of the enclosing class
+							that created it.
+						--Fields and methods in ordinary inner classes can only be at the outer level of a class, so ordinary inner
+							classes cannot have static data, static fields, or nested classes.static inner class(nested class):
+						-- You don't need an outer-class object in order to create an object  of a nested class.
+						-- You can't access a non-static outer-class object from a object of a nested class.

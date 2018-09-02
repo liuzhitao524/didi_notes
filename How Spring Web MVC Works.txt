@@ -1,0 +1,46 @@
+1.Tomcat和Servlet
+	Tomcat是一个servlet容器。
+	servlet(接口）负责处理每个具体的请求。
+2.DispatcherServlet;
+	No Spring: 1.需要映射每一个http请求到具体的处理方法
+		   2.解析http的请求头部和body，到dto（data transfer objects）或者domain object。	
+		   3.model-view-controller 交互；
+		   4.根据dto或者domain object ,生成response。
+	避免样板代码-DispatcherServlet:
+		作用：1.映射请求到具体的类或者方法。(实现HandlerMapping 接口）
+		      2.处理请求根据specific pattern（实现HandlerAdapter 接口）
+		      3.解析视图，通过名字（具体到不同的模板引擎）（实现ViewResolver 接口）	
+		      4.parse multipart requests(Apache Commons file  uploading implementation）（实现MultipartResolver接口）
+		      5.resolve locale with any LocalResolver implementation ,including cookie,session等。
+
+
+	抽象层级作用：
+		1.Unifying the request processing;(processRequest() 方法）；（FrameworkServlet）
+			http methods(doGet,doPost等） ->processRequest()->doService()
+			eg:
+				@Override
+				protected final void doGet(HttpServletRequest request, 
+  					HttpServletResponse response) throws ServletException, IOException {
+   						 processRequest(request, response);
+				}
+
+				@Override
+				protected final void doPost(HttpServletRequest request, 
+ 					 HttpServletResponse response) throws ServletException, IOException {
+   						 processRequest(request, response);
+				}
+		2.Enriching the request;
+				doService()-> doDispatch();
+			-DispatcherServlet implements doService() 方法。
+			-Add to the reqeust some useful objects: web application context, local resolver,theme resolver etc.
+			-doService() method prepare input and output flash maps;
+				Flash map is a pattern to pass parameters from one request to another request that immediately follows.
+				(用于redirect等）；
+		3.Dispatching the request;
+			-Main purpose: dispatch()方法 找到合适的处理器（Handler），需要查找实现HandlerMapping 接口的方法。
+		4.Handing the request:
+			-Spring determined the handler for the request and adapter(实现HandlerAdapter接口) for the handler.
+		5.Processing arguments and return values of handler methods:
+			-The RequestMappingHandlerAdapter makes sure the arguments of the method are resolved from HttpServletRequest,also creates 
+				the ModelAndView object from the method's return value;
+		6.Rendering the view;

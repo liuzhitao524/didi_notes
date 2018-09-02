@@ -1,0 +1,7 @@
+Servlet 与Servlet容器(Tomcat等）：
+	Tomcat负责：1.Listen for requests on certain port
+		    2.Communicate directly with a client
+		    3.Manage access to resources;
+	Servlet 接口:    
+Servlet life cycles:
+		

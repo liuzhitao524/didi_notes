@@ -1,0 +1,24 @@
+相关连接：http://slacksite.com/other/ftp.html
+FTP ports:
+	Command port : 21
+	Data port: not always 20;
+Tow modes:
+	Active mode：图见activeftp；
+			In active mode FTP the client connects from a random unprivileged port (N > 1023) to the FTP server's command port, port 21.
+		 Then, the client starts listening to port N+1 and sends the FTP command PORT N+1 to the FTP server.
+		连接过程解释如下：
+			1.FTP server's port 21 from anywhere (Client initiates connection)
+			2.FTP server's port 21 to ports > 1023 (Server responds to client's control port)
+			3.FTP server's port 20 to ports > 1023 (Server initiates data connection to client's data port)
+			4.FTP server's port 20 from ports > 1023 (Client sends ACKs to server's data port)
+		
+
+	
+	Passive mode: 图见passiveftp
+		    In passive mode FTP the client initiates both connections to the server, 
+	   solving the problem of firewalls filtering the incoming data port connection to the client from the server. 
+		连接过程如下：
+			1.FTP server's port 21 from anywhere (Client initiates connection)
+			2.FTP server's port 21 to ports > 1023 (Server responds to client's control port)
+			3.FTP server's ports > 1023 from anywhere (Client initiates data connection to random port specified by server)
+			4.FTP server's ports > 1023 to remote ports > 1023 (Server sends ACKs (and data) to client's data port)
